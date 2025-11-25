@@ -3,7 +3,7 @@
     "description": "Un générateur de fichiers de langue PHP réutilisable qui analyse les projets et les bibliothèques à la recherche de clés lang() et crée automatiquement des fichiers de langue structurés.",
     "type": "library",
     "license": "MIT",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "autoload": {
         "psr-4": {
             "Axproo\\LangManager\\": "src/"
@@ -18,6 +18,9 @@
     "require": {
         "php": ">=8.0"
     },
+    "bin": [
+        "bin/langgen.php"
+    ],
     "minimum-stability": "stable",
     "prefer-stable": true
 }

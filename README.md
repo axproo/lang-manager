@@ -17,7 +17,6 @@ Elle génère ensuite des fichiers du type :
 
 Avec une structure hiérarchique propre :
 
-```php
 <?php
 
 return [

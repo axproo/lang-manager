@@ -1,71 +1,105 @@
-<?php 
+<?php
 
 namespace Axproo\LangManager;
 
+use Axproo\LangManager\Strategies\LocalDictionaryStrategy;
+use Axproo\LangManager\Strategies\OnlineApiStrategy;
+use Axproo\LangManager\Strategies\HybridStrategy;
+
 class LangManager
 {
-    private string $projectDir;
-    private string $outputDir;
-    private array $locales;
+    protected array $scanDirs = [];
+    protected string $outputDir;
+    protected array $locales = ['fr','en'];
+    protected FileGenerator $generator;
+    protected string $dictionaryPath;
 
-    public function __construct(string $projectDir, string $outputDir, array $locales = ['fr','en']) {
-        $this->projectDir = rtrim($projectDir, '/');
-        $this->outputDir = rtrim($outputDir, '/');
+    public function __construct(array $scanDirs, string $outputDir, array $locales = ['fr','en'], string $dictionaryPath = __DIR__ . '/../dictionaries')
+    {
+        $this->scanDirs = $scanDirs;
+        $this->outputDir = rtrim($outputDir, DIRECTORY_SEPARATOR);
         $this->locales = $locales;
+        $this->generator = new FileGenerator();
+        $this->dictionaryPath = $dictionaryPath;
     }
 
-    /**
-     * Génère le fichier de langue pour tout le projet et les librairies
-     *
-     * @return void
-     */
-    public function generate() : void {
-        $langData = $this->scanProject($this->projectDir);
+    public function generate(bool $autoTranslate = false): void
+    {
+        $langData = [];
+        foreach ($this->scanDirs as $dir) {
+            if (!is_dir($dir)) continue;
+            $langData = $this->mergeTranslations($langData, $this->scanProject($dir));
+        }
+
+        // prepare translator strategy (hybrid) if required
+        $dictLoader = new DictionaryLoader($this->dictionaryPath, 'en', 'fr');
+        $localDict = new LocalDictionaryStrategy($dictLoader->getAll());
+        $online = new OnlineApiStrategy('none', []);
+        $hybrid = new HybridStrategy($localDict, $online, $this->dictionaryPath . '/en-fr.generated.php');
 
         foreach ($this->locales as $locale) {
-            $localeDir = $this->outputDir . '/' . $locale;
+            $localeDir = $this->outputDir . DIRECTORY_SEPARATOR . $locale;
             if (!is_dir($localeDir)) mkdir($localeDir, 0777, true);
 
             foreach ($langData as $module => $keys) {
-                $nestedArray = $this->buildNestedArray($keys);
+                $nested = $this->buildNestedArray($keys);
 
-                // Fusionner avec les traductions existantes
-                $filepath = $localeDir . '/' . $module . '.php';
-                $existing = file_exists($filepath) ? include $filepath : [];
-                $finalArray = $this->mergeTranslations($existing, $nestedArray);
+                // For each locale, optionally translate values or keep key as placeholder
+                $final = [];
+                foreach ($nested as $k => $v) {
+                    $final[$k] = $this->walkAndTranslate($v, $module, $hybrid, $locale, $autoTranslate);
+                }
 
-                // Formater et écrire
-                $formattedArray = $this->formatArray($finalArray);
-                $content = "<?php\n\nreturn " . $formattedArray .";\n>";
-                file_put_contents($filepath, $content);
+                $filepath = $localeDir . DIRECTORY_SEPARATOR . $module . '.php';
+                $existing = file_exists($filepath) ? require $filepath : [];
+                $merged = $this->mergeTranslations($existing, $final);
+
+                $this->generator->generateFile($filepath, $merged);
             }
         }
     }
 
-    /**
-     * Scan récursif du projet pour récupérer toutes les clés lang()
-     *
-     * @param string $dir
-     * @return array
-     */
-    private function scanProject(string $dir) : array {
+    protected function walkAndTranslate($node, $module, HybridStrategy $hybrid, $locale, $autoTranslate)
+    {
+        if (is_array($node)) {
+            $out = [];
+            foreach ($node as $k => $v) {
+                $out[$k] = $this->walkAndTranslate($v, $module, $hybrid, $locale, $autoTranslate);
+            }
+            return $out;
+        }
+
+        // node is a string subkey path like 'failed.email.required'
+        $fullKey = $module . '.' . $node;
+        if ($autoTranslate) {
+            $translated = $hybrid->translate($fullKey, $node, $locale);
+            return $translated ?? $node;
+        }
+
+        // default placeholder: keep node (you can change to fullKey if desired)
+        return $node;
+    }
+
+    protected function scanProject(string $path): array
+    {
         $langData = [];
-        $rii = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir));
+        $rii = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path));
 
         foreach ($rii as $file) {
-            if (!$file->isDir() && pathinfo($file, PATHINFO_EXTENSION) === 'php') {
-                if (strpos($file->getPathname(), 'Language') !== false) continue;
+            if ($file->isDir()) continue;
+            if (pathinfo($file->getPathname(), PATHINFO_EXTENSION) !== 'php') continue;
+            if (strpos($file->getPathname(), 'Language') !== false) continue;
 
-                $content = file_get_contents($file);
-                preg_match_all("/lang\(['\"](.*?)['\"]\)/", $content, $matches);
+            $content = @file_get_contents($file->getPathname());
+            if ($content === false) continue;
 
+            if (preg_match_all("/lang\(['\"](.*?)['\"]\)/", $content, $matches)) {
                 foreach ($matches[1] as $fullKey) {
                     $parts = explode('.', $fullKey);
-
                     if (count($parts) >= 2) {
                         $module = array_shift($parts);
-                        $subkeys = implode('.', $parts);
-                        $langData[$module][$subkeys] = $subkeys;
+                        $sub = implode('.', $parts);
+                        $langData[$module][$sub] = $sub;
                     }
                 }
             }
@@ -73,37 +107,24 @@ class LangManager
         return $langData;
     }
 
-    /**
-     * Transforme un tableau plat en tableau imbriqué
-     *
-     * @param array $flatArray
-     * @return array
-     */
-    private function buildNestedArray(array $flatArray) : array {
-        $result = [];
-
-        foreach ($flatArray as $fullKey => $value) {
+    protected function buildNestedArray(array $flat): array
+    {
+        $res = [];
+        foreach ($flat as $fullKey => $value) {
             $keys = explode('.', $fullKey);
-            $temp = &$result;
-
-            foreach ($keys as $key) {
-                if (!isset($temp[$key])) $temp[$key] = [];
-                $temp = &$temp[$key];
+            $temp = &$res;
+            foreach ($keys as $k) {
+                if (!isset($temp[$k])) $temp[$k] = [];
+                $temp = &$temp[$k];
             }
             $temp = $value;
             unset($temp);
         }
-        return $result;
+        return $res;
     }
 
-    /**
-     * Fusionne deux tableaux imbriqués, en gardant les traductions existantes
-     *
-     * @param array $existing
-     * @param array $new
-     * @return array
-     */
-    private function mergeTranslations(array $existing, array $new) : array {
+    protected function mergeTranslations(array $existing, array $new): array
+    {
         foreach ($new as $key => $value) {
             if (is_array($value)) {
                 if (!isset($existing[$key]) || !is_array($existing[$key])) $existing[$key] = [];
@@ -113,34 +134,5 @@ class LangManager
             }
         }
         return $existing;
-    }
-
-    /**
-     * Formatte un tableau PHP en texte avec syntaxe []
-     * @param array $array
-     * @param int $level
-     * @return string
-     */
-    private function formatArray(array $array, int $level = 0) : string {
-        $indent = str_repeat('    ', $level);
-        $output = "[\n";
-
-        foreach ($array as $key => $value) {
-            $output .= $indent . '    ' . "'" . addslashes($key) . "' => ";
-
-            if (is_array($value)) {
-                $output .= $this->formatArray($value, $level + 1);
-            } else {
-                $output .= "'" . addslashes($value) . "'";
-            }
-
-            // Ajout de la virgule systématique (PHP accepte la virgule finale)
-            $output .= ",";
-            $output .= "\n";
-        }
-
-        $output .= $indent . "]";
-
-        return $output;
     }
 }

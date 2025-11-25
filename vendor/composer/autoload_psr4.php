@@ -6,5 +6,5 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
-    'LangManager\\' => array($baseDir . '/src'),
+    'Axproo\\LangManager\\' => array($baseDir . '/src'),
 );
