@@ -17,12 +17,30 @@ class LangManager
 
             foreach ($langData as $module => $keys) {
 
+                $filePath = "$outputDir/$locale/$module.php";
+
+                // Charger le fichier existant
+                $existing = [];
+                if (file_exists($filePath)) {
+                    $existing = include $filePath;
+                    $existing = Helpers::flattenArray($existing);
+                }
+
                 $translated = [];
 
                 foreach ($keys as $k => $v) {
 
-                    // Traduction réelle basée sur la *valeur*, pas la *clé*
-                    $translated[$k] = $dictionary->translate($k, $locale);
+                    if (isset($existing[$k])) {
+                        $translated[$k] = $existing[$k];
+                    } else {
+                        // Vérifier le dictionnaire
+                        $dictTranslation = $dictionary->translate($k, $locale);
+
+                        if ($dictTranslation === $k) {
+                            // Pas de traduction -> placeholder
+                            $translated[$k] = $dictTranslation;
+                        }
+                    }
                 }
 
                 $nested = Helpers::buildNestedArray($translated);
