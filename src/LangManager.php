@@ -18,7 +18,7 @@ class LangManager
                 $translated = [];
 
                 foreach ($keys as $k => $v) {
-                    $translated[$k] = $dictionary->translate($k, $locale);
+                    $translated[$k] = $dictionary->translate($v, $locale);
                 }
 
                 $nested = Helpers::buildNestedArray($translated);
