@@ -53,6 +53,15 @@ composer install
 
 Dans votre projet :
 
+Si vous lancer les test à partir de composer, vous pouvez faire ceci:
+
+```bash
+composer dump-autoload
+```
+
+Créer un fichier nommé example.php à la racine de votre projet,
+et entré le code ci-dessous
+
 ```php
 require __DIR__ . '/vendor/autoload.php';
 
@@ -65,6 +74,12 @@ $manager->run(
     outputDir: './src/Language', // Répertoire de destination des langues (/fr, /en ...)
     locales: ['en', 'fr'] // Définition des langues du projet ['en','fr','es']
 );
+```
+
+en suite lancer dans votre CLI:
+
+```bash
+php exampe.php
 ```
 
 ## 📘 Exemple de fichiers générés
