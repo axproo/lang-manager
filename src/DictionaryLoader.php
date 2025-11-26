@@ -7,7 +7,7 @@ class DictionaryLoader
     protected array $dict = [];
     
     public function __construct() {
-        $base = __DIR__ . '/../dictionaries';
+        $base = __DIR__ . '/dictionaries';
 
         foreach (glob($base . "/*.php") as $file) {
 
