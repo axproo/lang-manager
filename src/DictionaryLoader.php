@@ -10,7 +10,8 @@ class DictionaryLoader
         $base = __DIR__ . '/../dictionaries';
 
         foreach (glob($base . "/*.php") as $file) {
-            $name = basename($file . ".php");
+
+            $name = pathinfo($file, PATHINFO_FILENAME);
             $this->dict[$name] = include $file;
         }
     }
@@ -19,7 +20,7 @@ class DictionaryLoader
         $map = "en-$locale";
 
         // Dictionnaire existant ?
-        if (isset($this->dict[$map]) && isset($this->dict[$map][$key])) {
+        if (isset($this->dict[$map][$key])) {
             return $this->dict[$map][$key];
         }
 

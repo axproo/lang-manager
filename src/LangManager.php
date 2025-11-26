@@ -9,7 +9,6 @@ class LangManager
         $scanner = new Scanner();
         $generator = new FileGenerator();
         $dictionary = new DictionaryLoader();
-        $reader = new LangReader();
 
         // Scan toutes les clés détectés dans le projet
         $langData = $scanner->scan($projectDir);
@@ -20,16 +19,10 @@ class LangManager
 
                 $translated = [];
 
-                // On charge le fichier source en (anglais / langue par défaut)
-                $sourceData = $reader->loadBaseMessages($module);
-
                 foreach ($keys as $k => $v) {
 
-                    // Si une valeur existe dans les fichiers source, on l'utiliser
-                    $sourceText = $sourceData[$k] ?? $v;
-
                     // Traduction réelle basée sur la *valeur*, pas la *clé*
-                    $translated[$k] = $dictionary->translate($sourceText, $locale);
+                    $translated[$k] = $dictionary->translate($k, $locale);
                 }
 
                 $nested = Helpers::buildNestedArray($translated);

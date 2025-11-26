@@ -1,5 +1,7 @@
 <?php 
 
 return [
-    // auto-generated translations will appear here
+    'login.success' => 'Connexion réussie',
+    'login.unauthorized' => 'Accès non autorisé',
+    'logout.success' => 'Déconnexion réussie'
 ];
