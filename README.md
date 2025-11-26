@@ -61,8 +61,8 @@ use LangManager\LangManager;
 $manager = new LangManager();
 
 $manager->run(
-    projectDir: './src', // Répertoire source
-    outputDir: './src/Language', // Répertoire de destination des langues
+    projectDir: './src', // Répertoire source à scanner pour rechercher les traduction ex: lang('Auth.login.success')
+    outputDir: './src/Language', // Répertoire de destination des langues (/fr, /en ...)
     locales: ['en', 'fr'] // Définition des langues du projet ['en','fr','es']
 );
 ```
