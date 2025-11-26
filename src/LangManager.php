@@ -15,9 +15,17 @@ class LangManager
 
         foreach ($locales as $locale) {
 
+            $localDir = rtrim($outputDir, '/') . '/' . $locale;
+
+            // Création automatique du dossier si nécessaire
+            if (!is_dir($localDir)) {
+                mkdir($localDir, 0755, true);
+                echo "Dossier {$localDir} créer avec succès";
+            }
+
             foreach ($langData as $module => $keys) {
 
-                $filePath = "$outputDir/$locale/$module.php";
+                $filePath = "$localDir/$module.php";
 
                 // Charger le fichier existant
                 $existing = [];
@@ -26,26 +34,33 @@ class LangManager
                     $existing = Helpers::flattenArray($existing);
                 }
 
-                $translated = [];
+                $translated = $existing; // On part des valeurs existantes
 
                 foreach ($keys as $k => $v) {
+                    $existingValue = $existing[$k] ?? null;
 
-                    if (isset($existing[$k])) {
-                        $translated[$k] = $existing[$k];
+                    // Traduction réelle basée sur la *valeur*, pas la *clé*
+                    $dictTranslation = $dictionary->translate($k, $locale);
+
+                    if ($dictTranslation !== $k) {
+                        // La traduction existe dans le dictionnaire → l'utiliser
+                        $translated[$k] = $dictTranslation;
+                    } elseif ($existingValue && strpos($existingValue, '__TRANSLATE__') === false) {
+                        // Valeur manuelle existante → conserver
+                        $translated[$k] = $existingValue;
                     } else {
-                        // Vérifier le dictionnaire
-                        $dictTranslation = $dictionary->translate($k, $locale);
-
-                        if ($dictTranslation === $k) {
-                            // Pas de traduction -> placeholder
-                            $translated[$k] = $dictTranslation;
-                        }
+                        // Sinon → mettre placeholder
+                        $translated[$k] = "__TRANSLATE__$k";
                     }
                 }
 
+                // Générer le tableau hiérarchique et sauvegarder
                 $nested = Helpers::buildNestedArray($translated);
-                $generator->save("$outputDir/$locale/$module", $nested);
+                $generator->save("$localDir/$module", $nested);
             }
         }
+
+        // Afficher le rapport des clés à traduire
+        LangReporter::shwoPendingTranslation($outputDir, $locales);
     }
 }

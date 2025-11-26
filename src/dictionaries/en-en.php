@@ -7,6 +7,6 @@ return [
     'failed.email.required' => 'Email require',
     'failed.email.valid_email' => '',
     'failed.email.incorrect' => '',
-    'failed.password.required' => '',
+    'failed.password.required' => 'Password require',
     'failed.password.length' => ''
 ];
