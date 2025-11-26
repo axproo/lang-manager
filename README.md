@@ -54,6 +54,8 @@ composer install
 Dans votre projet :
 
 ```php
+require __DIR__ . '/vendor/autoload.php';
+
 use LangManager\LangManager;
 
 $manager = new LangManager();
