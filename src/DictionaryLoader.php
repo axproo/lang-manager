@@ -4,20 +4,22 @@ namespace Axproo\LangManager;
 
 class DictionaryLoader
 {
-    protected array $dictionaries = [];
+    protected array $dict = [];
+    
+    public function __construct() {
+        $main = __DIR__ . '/dictionaries/en-fr.php';
+        $generated = __DIR__ . '/dictionaries/en-fr.generated.php';
 
-    public function __construct(string $dictionaryPath, string $source = 'en', string $target = 'fr') {
-        $mainFile      = rtrim($dictionaryPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . "$source-$target.php";
-        $generatedFile = rtrim($dictionaryPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . "$source-$target.generated.php";
+        if (file_exists($main)) {
+            $this->dict = include $main;
+        }
 
-        $mainData       = file_exists($mainFile) ? require $mainFile : [];
-        $genenratedData = file_exists($generateFile) ? require $generateFile : [];
-
-        // Fusion: priorité au dictionary généré
-        $this->dictionaries = array_merge($mainData, $genenratedData);
+        if (file_exists($generated)) {
+            $this->dict = array_merge($this->dict, include $generated);
+        }
     }
 
-    public function getAll() : array {
-        return $this->dictionaries;
+    public function translate(string $key) : string {
+        return $this->dict[$key] ?? $key;
     }
 }

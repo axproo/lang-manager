@@ -6,17 +6,16 @@
  * composer dump-autoload
  * en suite lancer dans votre CLI: php exampe.php
  */
-require 'Axproo/LangManager/src/LangManager.php';
+require __DIR__ . '/vendor/autoload.php';
 
 use Axproo\LangManager\LangManager;
 
-// Projet principal + sortie Language/
+$manager = new LangManager();
 
-$project    = ''; // Le projet à scanner
-$target     = ''; // le répertoire cible
-$locales    = []; // langues du projet à générer ['fr','en']
-
-$manager = new LangManager($project, $target, $locales);
-$manager->generate();
+$manager->run(
+    projectDir: './src',
+    outputDir: './src/Language',
+    locales: ['en', 'fr']
+);
 
 echo "Fichiers de langue générés avec succès !\n";

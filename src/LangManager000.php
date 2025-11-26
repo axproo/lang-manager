@@ -2,7 +2,7 @@
 
 namespace Axproo\LangManager;
 
-class LangManager
+class LangManager000
 {
     private string $projectDir;
     private string $outputDir;
