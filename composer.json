@@ -18,9 +18,6 @@
     "require": {
         "php": ">=8.0"
     },
-    "bin": [
-        "bin/langgen.php"
-    ],
     "minimum-stability": "stable",
     "prefer-stable": true
 }
