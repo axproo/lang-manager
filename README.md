@@ -40,7 +40,7 @@ return [
 ## 📦 Installation
 
 ```bash
-composer require yourvendor/lang-manager
+composer require axproo/lang-manager
 ```
 
 Ou en local:
