@@ -14,13 +14,11 @@ class LangManager
 
         foreach ($locales as $locale) {
             foreach ($langData as $module => $keys) {
-                
+
                 $translated = [];
 
                 foreach ($keys as $k => $v) {
-                    $translated[$k] = ($locale === 'fr')
-                        ? $dictionary->translate($v)
-                        : $v;
+                    $translated[$k] = $dictionary->translate($k, $locale);
                 }
 
                 $nested = Helpers::buildNestedArray($translated);

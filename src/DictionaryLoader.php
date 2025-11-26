@@ -7,19 +7,23 @@ class DictionaryLoader
     protected array $dict = [];
     
     public function __construct() {
-        $main = __DIR__ . '/dictionaries/en-fr.php';
-        $generated = __DIR__ . '/dictionaries/en-fr.generated.php';
+        $base = __DIR__ . '/../dictionaries';
 
-        if (file_exists($main)) {
-            $this->dict = include $main;
-        }
-
-        if (file_exists($generated)) {
-            $this->dict = array_merge($this->dict, include $generated);
+        foreach (glob($base . "/*.php") as $file) {
+            $name = basename($file . ".php");
+            $this->dict[$name] = include $file;
         }
     }
 
-    public function translate(string $key) : string {
-        return $this->dict[$key] ?? $key;
+    public function translate(string $key, string $locale = 'fr') : string {
+        $map = "en-$locale";
+
+        // Dictionnaire existant ?
+        if (isset($this->dict[$map]) && isset($this->dict[$map][$key])) {
+            return $this->dict[$map][$key];
+        }
+
+        // Pas de traduction -> retourne la clé brute
+        return $key;
     }
 }
