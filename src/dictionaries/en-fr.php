@@ -3,5 +3,6 @@
 return [
     'login.success' => 'Connexion réussie',
     'login.unauthorized' => 'Accès non autorisé',
-    'logout.success' => 'Déconnexion réussie'
+    'logout.success' => 'Déconnexion réussie',
+    'failed.email.required' => 'Email obligatoire'
 ];
