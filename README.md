@@ -1,41 +1,16 @@
-# LangManager
+# Axproo LangManager
 
-LangManager est une librairie PHP permettant de **générer automatiquement des fichiers de langue** (FR, EN ou autres) à partir de toutes les occurrences :
+LangManager est une librairie PHP pour gérer la traduction et la génération des fichiers de langue dans vos projets.  
+Elle scanne automatiquement votre code à la recherche des clés **`lang('module.key')`**, met à jour les fichiers de langue existants, ajoute les nouvelles clés avec un placeholder, et supprime les clés non utilisées.
 
-Elle scanne aussi bien :
+## Fonctionnalités
 
-- le projet principal
-- les librairies externes (vendor, libs…)
-- d’autres composants attachés à la solution
-
-Elle génère ensuite des fichiers du type :
-
-/Language/fr/Auth.php
-/Language/en/Auth.php
-
-```php
-
-Avec une structure hiérarchique propre :
-
-<?php
-
-return [
-    'login' => [
-        'success' => 'Login réussi',
-        'failed'  => 'Échec de connexion',
-    ],
-];
-```
-
-## ✨ Fonctionnalités
-
-- **Scan automatique** de plusieurs dossiers (src, vendor, libs…)
-- **Extraction** de toutes les clés lang('module.key')
-- **Génération automatique** des fichiers de langue par module
-- **Fusion automatique** avec les fichiers existants (aucune perte)
-- Formatage propre en tableaux []
-- Support multi-langues (ex : ['fr', 'en', 'es'])
-- Réutilisable dans n’importe quel projet PHP ou framework (CI4, Laravel, Slim…)
+- 📂 **Scan automatique** : Parcourt tous les fichiers PHP de votre projet pour détecter les clés `lang('module.key')`.
+- 🌐 **Gestion multilingue** : Génère et met à jour les fichiers pour plusieurs langues (`fr`, `en`, etc.).
+- 🆕 **Ajout automatique des nouvelles clés** avec placeholder `__TRANSLATE__`.
+- 🧹 **Nettoyage des clés obsolètes** : Supprime les clés non utilisées dans le projet.
+- 📝 **Rapport CLI** : Affiche les clés en attente de traduction.
+- 🔄 **Réutilisable** : Peut être utilisé dans n’importe quel projet PHP ou librairie.
 
 ## 📦 Installation
 
@@ -43,13 +18,24 @@ return [
 composer require axproo/lang-manager
 ```
 
-Ou en local:
+## Structure du projet
 
-```nginx
-composer install
+```css
+Axproo/LangManager
+├── src/
+│   ├── LangManager.php
+│   ├── Scanner.php
+│   ├── FileGenerator.php
+│   ├── DictionaryLoader.php
+│   ├── Helpers.php
+│   └── LangReporter.php
+├── dictionaries/
+│   ├── en-fr.php
+│   └── en-en.php
+└── vendor/
 ```
 
-## 🛠 Configuration basique
+## Exemple d’utilisation
 
 Dans votre projet :
 
@@ -67,13 +53,12 @@ require __DIR__ . '/vendor/autoload.php';
 
 use LangManager\LangManager;
 
-$manager = new LangManager();
+$projectDir = __DIR__ . '/src';
+$outputDir = __DIR__ . '/src/Language';
+$locales = ['fr', 'en', 'es'];
 
-$manager->run(
-    projectDir: './src', // Répertoire source à scanner pour rechercher les traduction ex: lang('Auth.login.success')
-    outputDir: './src/Language', // Répertoire de destination des langues (/fr, /en ...)
-    locales: ['en', 'fr'] // Définition des langues du projet ['en','fr','es']
-);
+$langManager = new LangManager();
+$langManager->run($projectDir, $outputDir, $locales);
 ```
 
 en suite lancer dans votre CLI:
@@ -82,7 +67,36 @@ en suite lancer dans votre CLI:
 php exampe.php
 ```
 
-## 📘 Exemple de fichiers générés
+## Explication
+
+- Les clés nouvelles sont ajoutées automatiquement dans les fichiers de langue avec le placeholder __TRANSLATE__.
+- Les anciennes clés non utilisées sont supprimées du dictionnaire et des fichiers de langue.
+- Les traductions existantes sont conservées si elles ne contiennent pas le placeholder.
+- Le rapport CLI affiche toutes les clés encore à traduire.
+
+## Fichiers de dictionnaire
+
+Exemple dictionaries/en-fr.php :
+
+```php
+<?php
+return [
+    'login.success' => 'Connexion réussie',
+    'login.unauthorized' => 'Accès non autorisé',
+];
+```
+
+Exemple dictionaries/en-en.php :
+
+```php
+<?php
+return [
+    'login.success' => 'Login successful',
+    'login.unauthorized' => 'Unauthorized access',
+];
+```
+
+## Exemple de fichiers générés
 
 ```css
 src/
@@ -99,23 +113,18 @@ src/
 
 Chaque clé trouvée est automatiquement placée dans le bon module.
 
-## 🧠 Ajout de nouvelles langues
+## Contribution
 
-Il suffit d’ajouter une langue supplémentaire :
+Les contributions sont les bienvenues !
+Pour ajouter une nouvelle langue, créez simplement un fichier en-xx.php dans le dossier dictionaries et exécutez LangManager.
+
+Vous pouvez aussi générer un fichier de langue en-xx.php en le spécifiant dans locales lors de la création de langues :
 
 ```php
 $locales = ['fr', 'en', 'es', 'de'];
 ```
 
 La librairie générera automatiquement les fichiers nécessaires.
-
-### 🛡 Protection des traductions existantes
-
-Les fichiers existants **ne sont jamais écrasés**.
-La librairie fusionne les données :
-
-- les anciennes traductions restent
-- les nouvelles clés sont ajoutées automatiquement
 
 ## 📄 Licence
 
