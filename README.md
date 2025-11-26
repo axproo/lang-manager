@@ -56,17 +56,13 @@ Dans votre projet :
 ```php
 use LangManager\LangManager;
 
-$scanDirs = [
-    './src',
-    './vendor',
-];
+$manager = new LangManager();
 
-$outputDir = './src/Language';
-
-$locales = ['fr', 'en'];
-
-$manager = new LangManager($scanDirs, $outputDir, $locales);
-$manager->generate();
+$manager->run(
+    projectDir: './src', // Répertoire source
+    outputDir: './src/Language', // Répertoire de destination des langues
+    locales: ['en', 'fr'] // Définition des langues du projet ['en','fr','es']
+);
 ```
 
 ## 📘 Exemple de fichiers générés
