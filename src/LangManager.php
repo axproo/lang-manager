@@ -13,6 +13,31 @@ class LangManager
         // Scan toutes les clés détectés dans le projet
         $langData = $scanner->scan($projectDir);
 
+        // Liste global des clés utilisés (ex: Auth.login.success)
+        $usedKeys = [];
+        foreach ($langData as $module => $keys) {
+            foreach ($keys as $k => $v) {
+                $usedKeys[$k] = $v;
+            }
+        }
+
+        // Mise à jour du dictionnaires internes
+        foreach ($locales as $locale) {
+            foreach ($usedKeys as $key) {
+                // Ajout automatique au dictionnaire si la clé n'existe pas
+                if (!$dictionary->exists($key, $locale)) {
+                    $dictionary->add($key, $locale, "__TRANSLATE__");
+                }
+            }
+
+            // Nettoyage du dictionnaire: supprimer les clés non utilisés
+            $dictionary->clean($usedKeys, $locale);
+
+            // Sauvegarder modifications dictionnaire
+            $dictionary->save($locale);
+        }
+
+        // Gnération des fichiers de langue
         foreach ($locales as $locale) {
 
             $localDir = rtrim($outputDir, '/') . '/' . $locale;
@@ -53,6 +78,9 @@ class LangManager
                         $translated[$k] = "__TRANSLATE__$k";
                     }
                 }
+
+                // S'assurer qu'on ne garde que les clés utilisées
+                $translated = array_intersect_key($translated, array_flip($keys));
 
                 // Générer le tableau hiérarchique et sauvegarder
                 $nested = Helpers::buildNestedArray($translated);
